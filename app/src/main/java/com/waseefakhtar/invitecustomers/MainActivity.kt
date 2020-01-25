@@ -7,9 +7,13 @@ import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.waseefakhtar.invitecustomers.adapter.CustomerListAdapter
 import com.waseefakhtar.invitecustomers.data.Customer
 import com.waseefakhtar.invitecustomers.network.ExecuteJSONTask
 import com.waseefakhtar.invitecustomers.network.OnPostExecuteListener
+import com.waseefakhtar.invitecustomers.util.DistanceUtil
+import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
 import java.lang.Math.*
 import kotlin.collections.ArrayList
@@ -17,27 +21,41 @@ import kotlin.math.acos
 import kotlin.math.sin
 
 
-private const val INTERCOM_LAT = 53.339428
-private const val INTERCOM_LONG = -6.257664
 private const val DISTANCE_CAP = 100.0
 private const val CUSTOMERS_LIST_URL = "https://s3.amazonaws.com/intercom-take-home-test/customers.txt"
 
 
 class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompletedListener, OnPostExecuteListener {
 
+    private lateinit var linearLayoutManager: LinearLayoutManager
+    private lateinit var customerListAdapter: CustomerListAdapter
+    private var customerList: ArrayList<Customer> = arrayListOf()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+    }
+
+    override fun onStart() {
+        super.onStart()
         ExecuteJSONTask(this).execute(CUSTOMERS_LIST_URL)
+    }
+
+    private fun initRecyclerView() {
+        recyclerView.setHasFixedSize(false)
+        linearLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        recyclerView.layoutManager = linearLayoutManager
+        customerListAdapter = CustomerListAdapter(customerList)
+        recyclerView.adapter = customerListAdapter
     }
 
     override fun onPostExecute(customerList: ArrayList<Customer>?) {
         customerList?.let {
+
             val invitedCustomers = mutableMapOf<Int, String>()
 
             for (customer in it) {
-                val distance = getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
-
+                val distance = DistanceUtil.getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
 
                 if (distance <= DISTANCE_CAP) {
                     println("${customer.name} is invited! Distance: ${distance}")
@@ -46,36 +64,10 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
             }
 
             saveResult(invitedCustomers.toSortedMap())
+
+            this.customerList = it
+            initRecyclerView()
         }
-    }
-
-    private fun getDistance(customerLongitude: Double, customerLatitude: Double): Double {
-        val x1 = toRadians(INTERCOM_LONG)
-        val y1 = toRadians(INTERCOM_LAT)
-        val x2 = toRadians(customerLongitude)
-        val y2 = toRadians(customerLatitude)
-
-        // Computing using Law of Cosines
-        var angle1 = acos(
-            sin(x1) * sin(x2)
-                    + cos(x1) * cos(x2) * cos(y1 - y2)
-        )
-
-        // convert back to degrees
-        // convert back to degrees
-        angle1 = toDegrees(angle1)
-
-        // each degree on a great circle of Earth is 60 nautical miles
-        // each degree on a great circle of Earth is 60 nautical miles
-        val distance1 = 60 * angle1
-
-        println("$distance1 nautical miles")
-
-        val distanceInKm = distance1 * 1.852
-
-        println("$distanceInKm kms")
-
-        return distanceInKm
     }
 
     private fun saveResult(invitedCustomers: Map<Int, String>) {

@@ -20,10 +20,7 @@ class ExecuteJSONTask constructor(private val listener: OnPostExecuteListener) :
 
     private fun getAllCustomers(jsonURL: String): java.util.ArrayList<Customer> {
         try {
-            //val assetManager = assets
-            //val ims: InputStream = assetManager.open("customers.txt")
             val gson = GsonBuilder().setLenient().create()
-            //val reader: Reader = InputStreamReader(ims)
 
             val url =  URL(jsonURL)
             val reader: Reader = InputStreamReader(url.openStream())
