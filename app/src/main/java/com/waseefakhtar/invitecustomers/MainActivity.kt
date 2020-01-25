@@ -15,10 +15,7 @@ import com.waseefakhtar.invitecustomers.network.OnPostExecuteListener
 import com.waseefakhtar.invitecustomers.util.DistanceUtil
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
-import java.lang.Math.*
 import kotlin.collections.ArrayList
-import kotlin.math.acos
-import kotlin.math.sin
 
 
 private const val DISTANCE_CAP = 100.0
@@ -42,7 +39,6 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
     }
 
     private fun initRecyclerView() {
-        recyclerView.setHasFixedSize(false)
         linearLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         recyclerView.layoutManager = linearLayoutManager
         customerListAdapter = CustomerListAdapter(customerList)
