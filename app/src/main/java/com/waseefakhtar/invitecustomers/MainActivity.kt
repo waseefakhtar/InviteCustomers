@@ -1,60 +1,71 @@
 package com.waseefakhtar.invitecustomers
 
+import android.media.MediaScannerConnection
+import android.net.Uri
+import android.os.AsyncTask
 import android.os.Bundle
+import android.os.Environment
+import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.GsonBuilder
 import com.waseefakhtar.invitecustomers.data.Customer
-import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.io.Reader
+import com.waseefakhtar.invitecustomers.network.ExecuteJSONTask
+import com.waseefakhtar.invitecustomers.network.OnPostExecuteListener
+import java.io.*
 import java.lang.Math.*
+import java.net.URL
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.acos
 import kotlin.math.sin
+
 
 private const val INTERCOM_LAT = 53.339428
 private const val INTERCOM_LONG = -6.257664
 private const val DISTANCE_CAP = 100.0
+private const val CUSTOMERS_LIST_URL = "https://s3.amazonaws.com/intercom-take-home-test/customers.txt"
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompletedListener, OnPostExecuteListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        ExecuteJSONTask(this).execute(CUSTOMERS_LIST_URL)
 
-        val customerList = getAllCustomers()
+        /*val customerList = getAllCustomers()
+        val invitedCustomers = mutableMapOf<Int, String>()
 
         for (customer in customerList) {
             val distance = getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
 
+
             if (distance <= DISTANCE_CAP) {
                 println("${customer.name} is invited! Distance: ${distance}")
+                invitedCustomers.put(customer.userId, customer.name)
             }
         }
+
+        saveResult(invitedCustomers.toSortedMap())*/
     }
 
-    private fun getAllCustomers(): ArrayList<Customer> {
-        try {
-            val assetManager = assets
-            val ims: InputStream = assetManager.open("customers.txt")
-            val gson = GsonBuilder().setLenient().create()
-            val reader: Reader = InputStreamReader(ims)
+    override fun onPostExecute(customerList: ArrayList<Customer>?) {
+        customerList?.let {
+            val invitedCustomers = mutableMapOf<Int, String>()
 
-            val customersArray = reader.readLines()
+            for (customer in it) {
+                val distance = getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
 
-            val customerList = arrayListOf<Customer>()
-            for (customer in customersArray) {
-                val customerElement = gson.fromJson(customer, Customer::class.java)
-                customerList.add(customerElement)
+
+                if (distance <= DISTANCE_CAP) {
+                    println("${customer.name} is invited! Distance: ${distance}")
+                    invitedCustomers[customer.userId] = customer.name
+                }
             }
 
-            return customerList
-        } catch (e: IOException) {
-            e.printStackTrace()
+            saveResult(invitedCustomers.toSortedMap())
         }
-
-        return arrayListOf()
     }
 
     private fun getDistance(customerLongitude: Double, customerLatitude: Double): Double {
@@ -84,5 +95,35 @@ class MainActivity : AppCompatActivity() {
         println("$distanceInKm kms")
 
         return distanceInKm
+    }
+
+    private fun saveResult(invitedCustomers: Map<Int, String>) {
+        val directoryPath = Environment.getExternalStoragePublicDirectory("Intercom Party Invitations")
+
+        if (!directoryPath.exists()) {
+            directoryPath.mkdir()
+        }
+
+        val documentTitle = "output.txt"
+        val filePath = File(directoryPath, documentTitle)
+
+        MediaScannerConnection.scanFile(this, arrayOf(filePath.toString()), null, this)
+
+        try {
+            val writer = FileWriter(filePath)
+            invitedCustomers.forEach { writer.append("UserID: ${it.key} Customer Name: ${it.value}\n") }
+            writer.flush()
+            writer.close()
+
+            Toast.makeText(this, "Text File successfully saved at location: ${directoryPath}!", Toast.LENGTH_LONG).show()
+
+        } catch (e: IOException) {
+            Log.e("main", "error $e");
+            Toast.makeText(this, "Something went wrong: $e",  Toast.LENGTH_LONG).show();
+        }
+    }
+
+    override fun onScanCompleted(p0: String?, p1: Uri?) {
+
     }
 }
