@@ -1,7 +1,9 @@
 package com.waseefakhtar.invitecustomers
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Bundle
@@ -11,6 +13,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.get
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.waseefakhtar.invitecustomers.adapter.CustomerListAdapter
@@ -26,6 +30,9 @@ import java.io.IOException
 
 private const val DISTANCE_CAP = 100.0
 private const val CUSTOMERS_LIST_URL = "https://s3.amazonaws.com/intercom-take-home-test/customers.txt"
+
+private const val REQUEST_CODE_PERMISSIONS = 0
+private val REQUIRED_PERMISSION = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
 
 class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompletedListener, OnPostExecuteListener {
@@ -74,11 +81,30 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
             }
 
             R.id.save -> {
-                saveResult(getInvitedCustomerMap())
+                if (writePermissionGranted()) {
+                    saveResult(getInvitedCustomerMap())
+                } else {
+                    ActivityCompat.requestPermissions(this, REQUIRED_PERMISSION, REQUEST_CODE_PERMISSIONS)
+                }
                 return true
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            if (writePermissionGranted()) {
+                saveResult(getInvitedCustomerMap())
+            } else {
+                Toast.makeText(this, "Write permission not granted by the user", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun writePermissionGranted() = REQUIRED_PERMISSION.all {
+        ContextCompat.checkSelfPermission(
+            baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun showFilteredList() {

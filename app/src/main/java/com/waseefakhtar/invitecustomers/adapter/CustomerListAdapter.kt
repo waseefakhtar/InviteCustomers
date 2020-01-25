@@ -37,7 +37,7 @@ class CustomerListAdapter constructor(private var customerList: ArrayList<Custom
             val distance = DistanceUtil.getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
 
             customerName.text = customer.name
-            customerDistance.text = "Lives ${distance.toInt()} km from Intercom office."
+            customerDistance.text = "Lives ${distance.toInt()} km from Intercom Dublin."
         }
     }
 }
