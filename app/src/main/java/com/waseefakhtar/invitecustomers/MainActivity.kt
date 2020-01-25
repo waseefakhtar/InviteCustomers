@@ -8,6 +8,9 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
+import java.lang.Math.*
+import kotlin.math.acos
+import kotlin.math.sin
 
 private const val INTERCOM_LAT = 53.339428
 private const val INTERCOM_LONG = -6.257664
@@ -55,28 +58,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getDistance(customerLongitude: Double, customerLatitude: Double): Double {
-        val x1 = Math.toRadians(INTERCOM_LONG)
-        val y1 = Math.toRadians(INTERCOM_LAT)
-        val x2 = Math.toRadians(customerLongitude)
-        val y2 = Math.toRadians(customerLatitude)
+        val x1 = toRadians(INTERCOM_LONG)
+        val y1 = toRadians(INTERCOM_LAT)
+        val x2 = toRadians(customerLongitude)
+        val y2 = toRadians(customerLatitude)
 
-        /*************************************************************************
-         * Compute using law of cosines
-         *************************************************************************/
-        // great circle distance in radians
-        /*************************************************************************
-         * Compute using law of cosines
-         */
-
-        // great circle distance in radians
-        var angle1 = Math.acos(
-            Math.sin(x1) * Math.sin(x2)
-                    + Math.cos(x1) * Math.cos(x2) * Math.cos(y1 - y2)
+        // Computing using Law of Cosines
+        var angle1 = acos(
+            sin(x1) * sin(x2)
+                    + cos(x1) * cos(x2) * cos(y1 - y2)
         )
 
         // convert back to degrees
         // convert back to degrees
-        angle1 = Math.toDegrees(angle1)
+        angle1 = toDegrees(angle1)
 
         // each degree on a great circle of Earth is 60 nautical miles
         // each degree on a great circle of Earth is 60 nautical miles
