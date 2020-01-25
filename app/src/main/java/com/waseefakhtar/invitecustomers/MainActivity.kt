@@ -17,26 +17,32 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        readGson()
+        val customerList = getAllCustomers()
+
+
+        
     }
 
-    private fun readGson() {
+    private fun getAllCustomers(): ArrayList<Customer> {
         try {
             val assetManager = assets
             val ims: InputStream = assetManager.open("customers.txt")
             val gson = GsonBuilder().setLenient().create()
             val reader: Reader = InputStreamReader(ims)
 
-            val newArray = reader.readLines()
+            val customersArray = reader.readLines()
 
-            for (json in newArray) {
-                val json = gson.fromJson(json, Customer::class.java)
-                Log.i("readGson", String.format("json: %s", json))
+            val customerList = arrayListOf<Customer>()
+            for (customer in customersArray) {
+                val customerElement = gson.fromJson(customer, Customer::class.java)
+                customerList.add(customerElement)
             }
 
-
+            return customerList
         } catch (e: IOException) {
             e.printStackTrace()
         }
+
+        return arrayListOf()
     }
 }
