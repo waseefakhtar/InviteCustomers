@@ -9,7 +9,8 @@ import com.waseefakhtar.invitecustomers.R
 import com.waseefakhtar.invitecustomers.data.Customer
 import com.waseefakhtar.invitecustomers.util.DistanceUtil
 
-class CustomerListAdapter constructor(private val customerList: ArrayList<Customer>) : RecyclerView.Adapter<CustomerListAdapter.ViewHolder>() {
+
+class CustomerListAdapter constructor(private var customerList: ArrayList<Customer>) : RecyclerView.Adapter<CustomerListAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.recyclerview_item_row, parent, false)
@@ -22,6 +23,11 @@ class CustomerListAdapter constructor(private val customerList: ArrayList<Custom
         holder.bind(customerList[position])
     }
 
+    fun updateCustomersList(newList: ArrayList<Customer>) {
+        customerList = newList
+        notifyDataSetChanged()
+    }
+
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
         private var customerName: TextView = view.findViewById(R.id.customerName)
@@ -31,7 +37,7 @@ class CustomerListAdapter constructor(private val customerList: ArrayList<Custom
             val distance = DistanceUtil.getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
 
             customerName.text = customer.name
-            customerDistance.text = "Lives ${distance.toInt()} km from our office."
+            customerDistance.text = "Lives ${distance.toInt()} km from Intercom office."
         }
     }
 }

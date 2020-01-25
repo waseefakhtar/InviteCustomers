@@ -6,13 +6,23 @@
     tools:context=".MainActivity">
 
     <item
-        android:id="@+id/filter"
+        android:id="@+id/viewFile"
+        app:showAsAction="always"
+        android:visible="false"
+        android:title="View Saved File"/>
+
+    <item
+        android:id="@+id/showAll"
+        app:showAsAction="collapseActionView"
+        android:title="Show All Customers"/>
+
+    <item
+        android:id="@+id/showFiltered"
         app:showAsAction="collapseActionView"
         android:title="Show Customers to Invite"/>
 
     <item
         android:id="@+id/save"
-        android:icon="@android:drawable/ic_menu_revert"
         app:showAsAction="collapseActionView"
         android:title="Save Invitation List"/>
 </menu>

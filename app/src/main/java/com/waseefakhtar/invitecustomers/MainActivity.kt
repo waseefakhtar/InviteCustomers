@@ -1,12 +1,17 @@
 package com.waseefakhtar.invitecustomers
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.get
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.waseefakhtar.invitecustomers.adapter.CustomerListAdapter
 import com.waseefakhtar.invitecustomers.data.Customer
@@ -14,8 +19,9 @@ import com.waseefakhtar.invitecustomers.network.ExecuteJSONTask
 import com.waseefakhtar.invitecustomers.network.OnPostExecuteListener
 import com.waseefakhtar.invitecustomers.util.DistanceUtil
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.*
-import kotlin.collections.ArrayList
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 
 
 private const val DISTANCE_CAP = 100.0
@@ -26,16 +32,61 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
 
     private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var customerListAdapter: CustomerListAdapter
+    private lateinit var savedFileUri: Uri
     private var customerList: ArrayList<Customer> = arrayListOf()
+    private var invitedCustomerList: ArrayList<Customer> = arrayListOf()
+    private var shouldShowViewFileAction = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        initRecyclerView()
     }
 
     override fun onStart() {
         super.onStart()
         ExecuteJSONTask(this).execute(CUSTOMERS_LIST_URL)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+
+        if (shouldShowViewFileAction) {
+            menu?.get(0)?.isVisible = true
+        }
+
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.viewFile -> {
+                openFileInFolder(savedFileUri)
+                return true
+            }
+            R.id.showAll -> {
+                showAllList()
+                return true
+            }
+            R.id.showFiltered -> {
+                showFilteredList()
+                return true
+            }
+
+            R.id.save -> {
+                saveResult(getInvitedCustomerMap())
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun showFilteredList() {
+        customerListAdapter.updateCustomersList(invitedCustomerList)
+    }
+
+    private fun showAllList() {
+        customerListAdapter.updateCustomersList(customerList)
     }
 
     private fun initRecyclerView() {
@@ -47,23 +98,28 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
 
     override fun onPostExecute(customerList: ArrayList<Customer>?) {
         customerList?.let {
-
-            val invitedCustomers = mutableMapOf<Int, String>()
-
-            for (customer in it) {
-                val distance = DistanceUtil.getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
-
-                if (distance <= DISTANCE_CAP) {
-                    println("${customer.name} is invited! Distance: ${distance}")
-                    invitedCustomers[customer.userId] = customer.name
-                }
-            }
-
-            saveResult(invitedCustomers.toSortedMap())
-
             this.customerList = it
-            initRecyclerView()
+            customerListAdapter.updateCustomersList(it)
+
+            invitedCustomerList = getInvitedCustomerList(it)
         }
+    }
+
+    private fun getInvitedCustomerList(customerList: ArrayList<Customer>): ArrayList<Customer> {
+        val invitedCustomers = arrayListOf<Customer>()
+
+        for (customer in customerList) {
+            val distance = DistanceUtil.getDistance(
+                customer.longitude.toDouble(),
+                customer.latitude.toDouble()
+            )
+
+            if (distance <= DISTANCE_CAP) {
+                invitedCustomers.add(customer)
+            }
+        }
+
+        return invitedCustomers
     }
 
     private fun saveResult(invitedCustomers: Map<Int, String>) {
@@ -92,7 +148,32 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
         }
     }
 
-    override fun onScanCompleted(p0: String?, p1: Uri?) {
+    private fun getInvitedCustomerMap(): Map<Int, String> {
+        val invitedCustomers = mutableMapOf<Int, String>()
 
+        for (customer in invitedCustomerList) {
+            invitedCustomers[customer.userId] = customer.name
+        }
+
+        return invitedCustomers
+    }
+
+    override fun onScanCompleted(string: String?, uri: Uri?) {
+        uri?.let {
+            savedFileUri = it
+            shouldShowViewFileAction = true
+            invalidateOptionsMenu()
+        }
+    }
+
+    private fun openFileInFolder(uri: Uri) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW);
+            intent.setData(uri)
+            startActivity(intent)
+        } catch (exception: ActivityNotFoundException) {
+            exception.printStackTrace()
+            Toast.makeText(this, "You do not have a TXT file reader installed on your device.",  Toast.LENGTH_LONG).show();
+        }
     }
 }
