@@ -2,20 +2,16 @@ package com.waseefakhtar.invitecustomers
 
 import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.gson.GsonBuilder
 import com.waseefakhtar.invitecustomers.data.Customer
 import com.waseefakhtar.invitecustomers.network.ExecuteJSONTask
 import com.waseefakhtar.invitecustomers.network.OnPostExecuteListener
 import java.io.*
 import java.lang.Math.*
-import java.net.URL
-import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.acos
 import kotlin.math.sin
@@ -33,21 +29,6 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         ExecuteJSONTask(this).execute(CUSTOMERS_LIST_URL)
-
-        /*val customerList = getAllCustomers()
-        val invitedCustomers = mutableMapOf<Int, String>()
-
-        for (customer in customerList) {
-            val distance = getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
-
-
-            if (distance <= DISTANCE_CAP) {
-                println("${customer.name} is invited! Distance: ${distance}")
-                invitedCustomers.put(customer.userId, customer.name)
-            }
-        }
-
-        saveResult(invitedCustomers.toSortedMap())*/
     }
 
     override fun onPostExecute(customerList: ArrayList<Customer>?) {
