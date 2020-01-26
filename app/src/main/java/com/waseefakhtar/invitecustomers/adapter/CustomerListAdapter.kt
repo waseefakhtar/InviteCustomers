@@ -34,7 +34,7 @@ class CustomerListAdapter constructor(private var customerList: ArrayList<Custom
         private var customerDistance: TextView = view.findViewById(R.id.customerLocation)
 
         fun bind(customer: Customer) {
-            val distance = DistanceUtil.getDistance(customer.longitude.toDouble(), customer.latitude.toDouble())
+            val distance = DistanceUtil.getDistance(customer.longitude, customer.latitude)
 
             customerName.text = customer.name
             customerDistance.text = "Lives ${distance.toInt()} km from Intercom Dublin."

@@ -136,8 +136,8 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
 
         for (customer in customerList) {
             val distance = DistanceUtil.getDistance(
-                customer.longitude.toDouble(),
-                customer.latitude.toDouble()
+                customer.longitude,
+                customer.latitude
             )
 
             if (distance <= DISTANCE_CAP) {
@@ -195,7 +195,7 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
     private fun openFileInFolder(uri: Uri) {
         try {
             val intent = Intent(Intent.ACTION_VIEW);
-            intent.setData(uri)
+            intent.data = uri
             startActivity(intent)
         } catch (exception: ActivityNotFoundException) {
             exception.printStackTrace()
