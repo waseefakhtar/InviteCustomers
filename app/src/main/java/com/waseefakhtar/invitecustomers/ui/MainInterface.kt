@@ -1,4 +1,4 @@
-package com.waseefakhtar.invitecustomers
+package com.waseefakhtar.invitecustomers.ui
 
 import android.net.Uri
 import com.waseefakhtar.invitecustomers.data.Customer

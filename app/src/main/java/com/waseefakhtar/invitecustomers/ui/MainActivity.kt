@@ -1,4 +1,4 @@
-package com.waseefakhtar.invitecustomers
+package com.waseefakhtar.invitecustomers.ui
 
 import android.Manifest
 import android.content.ActivityNotFoundException
@@ -17,6 +17,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.get
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.waseefakhtar.invitecustomers.R
 import com.waseefakhtar.invitecustomers.adapter.CustomerListAdapter
 import com.waseefakhtar.invitecustomers.data.Customer
 import kotlinx.android.synthetic.main.activity_main.*
@@ -28,7 +29,8 @@ import java.io.IOException
 private const val REQUEST_CODE_PERMISSIONS = 0
 private val REQUIRED_PERMISSION = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
-class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompletedListener, MainInterface.View {
+class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompletedListener,
+    MainInterface.View {
 
     private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var customerListAdapter: CustomerListAdapter
@@ -41,7 +43,8 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        presenter = MainActivityPresenter(this)
+        presenter =
+            MainActivityPresenter(this)
     }
 
     override fun initView() {
@@ -83,7 +86,10 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
                 if (writePermissionGranted()) {
                     presenter?.generateInvitedCustomerMap()
                 } else {
-                    ActivityCompat.requestPermissions(this, REQUIRED_PERMISSION, REQUEST_CODE_PERMISSIONS)
+                    ActivityCompat.requestPermissions(this,
+                        REQUIRED_PERMISSION,
+                        REQUEST_CODE_PERMISSIONS
+                    )
                 }
                 return true
             }
