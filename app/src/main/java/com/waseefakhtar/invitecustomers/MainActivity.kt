@@ -19,40 +19,39 @@ import androidx.core.view.get
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.waseefakhtar.invitecustomers.adapter.CustomerListAdapter
 import com.waseefakhtar.invitecustomers.data.Customer
-import com.waseefakhtar.invitecustomers.network.ExecuteJSONTask
-import com.waseefakhtar.invitecustomers.network.OnPostExecuteListener
-import com.waseefakhtar.invitecustomers.util.DistanceUtil
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 
 
-private const val DISTANCE_CAP = 100.0
-private const val CUSTOMERS_LIST_URL = "https://s3.amazonaws.com/intercom-take-home-test/customers.txt"
-
 private const val REQUEST_CODE_PERMISSIONS = 0
 private val REQUIRED_PERMISSION = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
-
-class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompletedListener, OnPostExecuteListener {
+class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompletedListener, MainInterface.View {
 
     private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var customerListAdapter: CustomerListAdapter
-    private lateinit var savedFileUri: Uri
-    private var customerList: ArrayList<Customer> = arrayListOf()
-    private var invitedCustomerList: ArrayList<Customer> = arrayListOf()
+
+    private var presenter: MainActivityPresenter? = null
+
     private var shouldShowViewFileAction = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        presenter = MainActivityPresenter(this)
+    }
+
+    override fun initView() {
         initRecyclerView()
     }
 
     override fun onStart() {
         super.onStart()
-        ExecuteJSONTask(this).execute(CUSTOMERS_LIST_URL)
+
+        presenter?.executeJsonTask()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -68,21 +67,21 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.viewFile -> {
-                openFileInFolder(savedFileUri)
+                presenter?.generateFileUri()
                 return true
             }
             R.id.showAll -> {
-                showAllList()
+                presenter?.updateListWithAll()
                 return true
             }
             R.id.showFiltered -> {
-                showFilteredList()
+                presenter?.updateListWithInvited()
                 return true
             }
 
             R.id.save -> {
                 if (writePermissionGranted()) {
-                    saveResult(getInvitedCustomerMap())
+                    presenter?.generateInvitedCustomerMap()
                 } else {
                     ActivityCompat.requestPermissions(this, REQUIRED_PERMISSION, REQUEST_CODE_PERMISSIONS)
                 }
@@ -95,7 +94,7 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (writePermissionGranted()) {
-                saveResult(getInvitedCustomerMap())
+                presenter?.generateInvitedCustomerMap()
             } else {
                 Toast.makeText(this, "Write permission not granted by the user", Toast.LENGTH_SHORT).show()
             }
@@ -107,48 +106,18 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
             baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun showFilteredList() {
-        customerListAdapter.updateCustomersList(invitedCustomerList)
-    }
-
-    private fun showAllList() {
-        customerListAdapter.updateCustomersList(customerList)
-    }
-
     private fun initRecyclerView() {
         linearLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         recyclerView.layoutManager = linearLayoutManager
-        customerListAdapter = CustomerListAdapter(customerList)
+        customerListAdapter = CustomerListAdapter(arrayListOf())
         recyclerView.adapter = customerListAdapter
     }
 
-    override fun onPostExecute(customerList: ArrayList<Customer>?) {
-        customerList?.let {
-            this.customerList = it
-            customerListAdapter.updateCustomersList(it)
-
-            invitedCustomerList = getInvitedCustomerList(it)
-        }
+    override fun updateViewWith(customerList: ArrayList<Customer>) {
+        customerListAdapter.updateCustomersList(customerList)
     }
 
-    private fun getInvitedCustomerList(customerList: ArrayList<Customer>): ArrayList<Customer> {
-        val invitedCustomers = arrayListOf<Customer>()
-
-        for (customer in customerList) {
-            val distance = DistanceUtil.getDistance(
-                customer.longitude,
-                customer.latitude
-            )
-
-            if (distance <= DISTANCE_CAP) {
-                invitedCustomers.add(customer)
-            }
-        }
-
-        return invitedCustomers
-    }
-
-    private fun saveResult(invitedCustomers: Map<Int, String>) {
+    override fun saveFileToDisk(customerMap: Map<Int, String>) {
         val directoryPath = Environment.getExternalStoragePublicDirectory("Intercom Party Invitations")
 
         if (!directoryPath.exists()) {
@@ -162,7 +131,7 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
 
         try {
             val writer = FileWriter(filePath)
-            invitedCustomers.forEach { writer.append("UserID: ${it.key} Customer Name: ${it.value}\n") }
+            customerMap.forEach { writer.append("UserID: ${it.key} Customer Name: ${it.value}\n") }
             writer.flush()
             writer.close()
 
@@ -174,25 +143,18 @@ class MainActivity : AppCompatActivity(), MediaScannerConnection.OnScanCompleted
         }
     }
 
-    private fun getInvitedCustomerMap(): Map<Int, String> {
-        val invitedCustomers = mutableMapOf<Int, String>()
-
-        for (customer in invitedCustomerList) {
-            invitedCustomers[customer.userId] = customer.name
-        }
-
-        return invitedCustomers
-    }
-
     override fun onScanCompleted(string: String?, uri: Uri?) {
         uri?.let {
-            savedFileUri = it
-            shouldShowViewFileAction = true
-            invalidateOptionsMenu()
+            presenter?.updateFileUri(it)
         }
     }
 
-    private fun openFileInFolder(uri: Uri) {
+    override fun invalidateMenuItems() {
+        shouldShowViewFileAction = true
+        invalidateOptionsMenu()
+    }
+
+    override fun openFileInFolder(uri: Uri) {
         try {
             val intent = Intent(Intent.ACTION_VIEW);
             intent.data = uri
