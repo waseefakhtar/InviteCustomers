@@ -26,12 +26,9 @@ object DistanceUtil {
         angle = toDegrees(angle)
 
         val distanceInNauticalMiles = 60 * angle
-
-        println("$distanceInNauticalMiles nautical miles")
-
         val distanceInKm = distanceInNauticalMiles * 1.852
 
-        println("$distanceInKm kms")
+        println("$distanceInKm km")
 
         return distanceInKm
     }
