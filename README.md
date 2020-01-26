@@ -19,7 +19,7 @@ The action bar shows a number of actions:
 
 ## How to install and run the app from source code
 
-1. Download and install Android Studio 3.5+
+1. Download and install Android Studio 3.5+: https://developer.android.com/studio
 2. Download the `InviteCustomers` repository as zip.
 3. Extract the zip file.
 4. Click on open an existing Android Studio project.
