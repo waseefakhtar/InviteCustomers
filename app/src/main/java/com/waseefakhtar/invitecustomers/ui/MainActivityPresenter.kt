@@ -27,13 +27,12 @@ class MainActivityPresenter constructor(private val view: MainInterface.View) : 
         result?.let {
             updateCustomerList(it)
             updateInvitedCustomerList(it)
+            view.updateViewWith(customerList)
         }
     }
 
     private fun updateCustomerList(customerList: ArrayList<Customer>) {
         this.customerList = customerList
-        view.updateViewWith(customerList)
-
     }
 
     private fun updateInvitedCustomerList(customerList: ArrayList<Customer>) {
