@@ -12,3 +12,7 @@ gradle-app.setting
 
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
+Keystore/keystore
+.idea/caches/build_file_checksums.ser
+.idea/caches/build_file_checksums.ser
+app/app.iml
